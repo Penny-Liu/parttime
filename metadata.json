@@ -1,0 +1,5 @@
+{
+  "name": "RadioShift",
+  "description": "A cloud-based CD burning shift management system for students using Google Sheets as the backend.",
+  "requestFramePermissions": []
+}
