@@ -158,7 +158,7 @@ const PrintView: React.FC<PrintViewProps> = ({ currentDate, data, onClose }) => 
                               </div>
                             )}
 
-                            <div className="flex justify-center items-center h-full pb-8">
+                            <div className="flex justify-center items-center h-full pb-0">
                               {cell.isClosed ? (
                                 <div className="flex flex-col items-center">
                                   <span className="text-gray-300 font-bold text-2xl border-4 border-gray-200 rounded-xl px-4 py-1 -rotate-12 opacity-80">休診</span>
