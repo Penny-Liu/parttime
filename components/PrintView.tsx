@@ -108,8 +108,12 @@ const PrintView: React.FC<PrintViewProps> = ({ currentDate, data, onClose }) => 
         <div className="p-0 md:p-8 overflow-auto bg-white flex-1 flex flex-col items-center">
           <div className="print-container w-full h-full">
             {/* Print Header */}
-            <div className="text-center mb-4">
-              <h2 className="text-4xl font-extrabold text-gray-900 mb-1">{year} 年 {month + 1} 月 燒錄光碟班表</h2>
+            {/* Print Header */}
+            <div className="text-center mb-1 relative flex items-end justify-center">
+               <h2 className="text-4xl font-extrabold text-gray-900 leading-none">{year} 年 {month + 1} 月 燒錄光碟班表</h2>
+               <div className="absolute right-0 bottom-1 text-xs text-gray-400 font-bold">
+                  製表日期：{new Date().toLocaleDateString()}
+               </div>
             </div>
 
             <table className="w-full border-collapse border border-gray-400 shadow-sm rounded-lg overflow-hidden table-fixed">
@@ -139,10 +143,10 @@ const PrintView: React.FC<PrintViewProps> = ({ currentDate, data, onClose }) => 
                         const isWeekend = cIdx === 0 || cIdx === 6;
 
                         return (
-                          <td key={cIdx} className={`border border-gray-900 p-1 align-top relative ${isWeekend ? 'bg-gray-50/50' : ''}`}>
+                          <td key={cIdx} className={`border border-gray-900 p-[2px] align-top relative ${isWeekend ? 'bg-gray-50/50' : ''}`}>
                             {/* Date Number */}
-                            <div className="flex justify-between items-start px-2">
-                              <span className={`font-bold text-2xl block ${cIdx === 0 ? 'text-red-600' : cIdx === 6 ? 'text-green-700' : 'text-gray-900'}`}>
+                            <div className="flex justify-between items-start px-1">
+                              <span className={`font-bold text-2xl block leading-none ${cIdx === 0 ? 'text-red-600' : cIdx === 6 ? 'text-green-700' : 'text-gray-900'}`}>
                                 {cell.day}
                               </span>
                               {/* Holiday Badge for Print */}
@@ -153,9 +157,9 @@ const PrintView: React.FC<PrintViewProps> = ({ currentDate, data, onClose }) => 
 
                             {/* Time Display */}
                             {!cell.isClosed && (
-                              <div className={`text-sm text-center font-bold mb-1 tracking-tight ${cell.isSunday || cell.isHoliday ? 'text-red-600' : 'text-gray-500'}`}>
-                                {cell.timeString}
-                              </div>
+                                <div className={`text-sm text-center font-bold mb-0 tracking-tight leading-none ${cell.isSunday || cell.isHoliday ? 'text-red-600' : 'text-gray-500'}`}>
+                                    {cell.timeString}
+                                </div>
                             )}
 
                             <div className="flex justify-center items-center h-full pb-0">
@@ -164,7 +168,7 @@ const PrintView: React.FC<PrintViewProps> = ({ currentDate, data, onClose }) => 
                                   <span className="text-gray-300 font-bold text-2xl border-4 border-gray-200 rounded-xl px-4 py-1 -rotate-12 opacity-80">休診</span>
                                 </div>
                               ) : (
-                                <div className={`w-[98%] py-1 rounded-lg text-center font-extrabold shadow-none ${cell.cellStyle} flex items-center justify-center leading-none ${heightClass}`}>
+                                <div className={`w-[98%] py-[2px] rounded-lg text-center font-extrabold shadow-none ${cell.cellStyle} flex items-center justify-center leading-none ${heightClass}`}>
                                   {cell.content}
                                 </div>
                               )}
@@ -178,9 +182,7 @@ const PrintView: React.FC<PrintViewProps> = ({ currentDate, data, onClose }) => 
               </tbody>
             </table>
 
-            <div className="mt-4 flex justify-between text-xs text-gray-400 px-2">
-              <span>製表日期：{new Date().toLocaleDateString()}</span>
-            </div>
+            </table>
           </div>
         </div>
       </div>
@@ -261,7 +263,7 @@ const PrintView: React.FC<PrintViewProps> = ({ currentDate, data, onClose }) => 
             }
         }
       `}</style>
-    </div>
+    </div >
   );
 };
 
