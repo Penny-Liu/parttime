@@ -207,7 +207,10 @@ const PrintView: React.FC<PrintViewProps> = ({ currentDate, data, onClose }) => 
                 height: 100% !important;
                 background: white !important;
                 z-index: 9999;
-                display: block !important;
+                z-index: 9999;
+                display: flex !important;
+                justify-content: center !important;
+                align-items: flex-start !important;
             }
 
             /* Ensure everything inside the modal is visible */
@@ -222,10 +225,12 @@ const PrintView: React.FC<PrintViewProps> = ({ currentDate, data, onClose }) => 
 
             .print-container {
                 width: 100% !important;
-                max-width: none !important;
-                margin: 0 !important;
+                max-width: 290mm !important; /* Ensure it doesn't exceed A4 landscape width */
+                margin: 0 auto !important;
                 display: block !important;
-                transform: none; /* Removed scaling to fill page */
+                /* Auto-scale slightly to ensure borders fit comfortably */
+                transform: scale(0.98); 
+                transform-origin: top center;
             }
 
             .overflow-auto {
