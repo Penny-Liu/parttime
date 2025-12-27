@@ -110,10 +110,10 @@ const PrintView: React.FC<PrintViewProps> = ({ currentDate, data, onClose }) => 
             {/* Print Header */}
             {/* Print Header */}
             <div className="text-center mb-1 relative flex items-end justify-center">
-               <h2 className="text-4xl font-extrabold text-gray-900 leading-none">{year} 年 {month + 1} 月 燒錄光碟班表</h2>
-               <div className="absolute right-0 bottom-1 text-xs text-gray-400 font-bold">
-                  製表日期：{new Date().toLocaleDateString()}
-               </div>
+              <h2 className="text-4xl font-extrabold text-gray-900 leading-none">{year} 年 {month + 1} 月 燒錄光碟班表</h2>
+              <div className="absolute right-0 bottom-1 text-xs text-gray-400 font-bold">
+                製表日期：{new Date().toLocaleDateString()}
+              </div>
             </div>
 
             <table className="w-full border-collapse border border-gray-400 shadow-sm rounded-lg overflow-hidden table-fixed">
@@ -157,9 +157,9 @@ const PrintView: React.FC<PrintViewProps> = ({ currentDate, data, onClose }) => 
 
                             {/* Time Display */}
                             {!cell.isClosed && (
-                                <div className={`text-sm text-center font-bold mb-0 tracking-tight leading-none ${cell.isSunday || cell.isHoliday ? 'text-red-600' : 'text-gray-500'}`}>
-                                    {cell.timeString}
-                                </div>
+                              <div className={`text-sm text-center font-bold mb-0 tracking-tight leading-none ${cell.isSunday || cell.isHoliday ? 'text-red-600' : 'text-gray-500'}`}>
+                                {cell.timeString}
+                              </div>
                             )}
 
                             <div className="flex justify-center items-center h-full pb-0">
@@ -182,7 +182,7 @@ const PrintView: React.FC<PrintViewProps> = ({ currentDate, data, onClose }) => 
               </tbody>
             </table>
 
-            </table>
+
           </div>
         </div>
       </div>
