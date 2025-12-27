@@ -79,7 +79,21 @@ const App: React.FC = () => {
       setData(newData);
 
       // Queue Action
-      setUnsavedActions(prev => [...prev, { date: dateStr, userId: currentUser.id }]);
+      // Queue Action Logic:
+      // If an action for this date already exists in unsavedActions, it means the user is toggling it BACK to the original state.
+      // So instead of adding another action, we should REMOVE the existing pending action.
+      setUnsavedActions(prev => {
+        const existingActionIndex = prev.findIndex(a => a.date === dateStr && a.userId === currentUser.id);
+        if (existingActionIndex >= 0) {
+          // Remove the existing action (cancel out)
+          const newActions = [...prev];
+          newActions.splice(existingActionIndex, 1);
+          return newActions;
+        } else {
+          // Add new action
+          return [...prev, { date: dateStr, userId: currentUser.id }];
+        }
+      });
 
     } else if (currentUser.role === UserRole.ADMIN) {
       setSelectedAdminDate(dateStr);
@@ -476,10 +490,10 @@ const App: React.FC = () => {
                         key={uid}
                         onClick={() => handleAdminShiftAction('confirm', uid)}
                         className={`w-full flex items-center justify-between p-3 rounded-xl border-2 transition-all group ${isConfirmed
-                            ? 'border-green-500 bg-green-50 shadow-sm'
-                            : isAutoConfirmed
-                              ? 'border-blue-400 bg-blue-50 shadow-sm'
-                              : 'border-transparent bg-gray-50 hover:bg-blue-50 hover:border-blue-200'
+                          ? 'border-green-500 bg-green-50 shadow-sm'
+                          : isAutoConfirmed
+                            ? 'border-blue-400 bg-blue-50 shadow-sm'
+                            : 'border-transparent bg-gray-50 hover:bg-blue-50 hover:border-blue-200'
                           }`}
                       >
                         <div className="flex items-center gap-3">
@@ -505,8 +519,8 @@ const App: React.FC = () => {
                 <button
                   onClick={() => handleAdminShiftAction('close')}
                   className={`p-3 rounded-xl font-bold border-2 transition-all ${data.shifts[selectedAdminDate]?.isClosed
-                      ? 'bg-red-500 text-white border-red-500 shadow-lg shadow-red-200'
-                      : 'bg-white text-red-500 border-red-100 hover:border-red-300 hover:bg-red-50'
+                    ? 'bg-red-500 text-white border-red-500 shadow-lg shadow-red-200'
+                    : 'bg-white text-red-500 border-red-100 hover:border-red-300 hover:bg-red-50'
                     }`}
                 >
                   {data.shifts[selectedAdminDate]?.isClosed ? '🔓 解除休診' : '🔒 設為休診'}
