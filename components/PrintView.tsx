@@ -124,49 +124,57 @@ const PrintView: React.FC<PrintViewProps> = ({ currentDate, data, onClose }) => 
                 </tr>
               </thead>
               <tbody>
-                {weeks.map((week, idx) => (
-                  <tr key={idx} className="h-32">
-                    {week.map((cell: any, cIdx: number) => {
-                      if (!cell) return <td key={cIdx} className="border border-gray-400 p-2 bg-gray-50/20"></td>;
+                {weeks.map((week, idx) => {
+                  // Dynamic row height based on total weeks to ensure single page
+                  // 6 weeks -> h-24, 5 weeks -> h-28, 4 weeks -> h-32
+                  const rowHeightClass = weeks.length >= 6 ? 'h-24' : weeks.length === 5 ? 'h-28' : 'h-32';
 
-                      const isWeekend = cIdx === 0 || cIdx === 6;
+                  return (
+                    <tr key={idx} className={rowHeightClass}>
+                      {week.map((cell: any, cIdx: number) => {
+                        const heightClass = weeks.length >= 6 ? 'h-14 text-2xl' : 'h-16 text-3xl';
 
-                      return (
-                        <td key={cIdx} className={`border border-gray-900 p-1 align-top relative ${isWeekend ? 'bg-gray-50/50' : ''}`}>
-                          {/* Date Number */}
-                          <div className="flex justify-between items-start px-2">
-                            <span className={`font-bold text-2xl block ${cIdx === 0 ? 'text-red-600' : cIdx === 6 ? 'text-green-700' : 'text-gray-900'}`}>
-                              {cell.day}
-                            </span>
-                            {/* Holiday Badge for Print */}
-                            {cell.isHoliday && (
-                              <span className="text-sm bg-red-100 text-red-600 px-2 py-0.5 rounded border border-red-200 font-bold">假</span>
-                            )}
-                          </div>
+                        if (!cell) return <td key={cIdx} className="border border-gray-400 p-2 bg-gray-50/20"></td>;
 
-                          {/* Time Display */}
-                          {!cell.isClosed && (
-                            <div className={`text-sm text-center font-bold mb-1 tracking-tight ${cell.isSunday || cell.isHoliday ? 'text-red-600' : 'text-gray-500'}`}>
-                              {cell.timeString}
+                        const isWeekend = cIdx === 0 || cIdx === 6;
+
+                        return (
+                          <td key={cIdx} className={`border border-gray-900 p-1 align-top relative ${isWeekend ? 'bg-gray-50/50' : ''}`}>
+                            {/* Date Number */}
+                            <div className="flex justify-between items-start px-2">
+                              <span className={`font-bold text-2xl block ${cIdx === 0 ? 'text-red-600' : cIdx === 6 ? 'text-green-700' : 'text-gray-900'}`}>
+                                {cell.day}
+                              </span>
+                              {/* Holiday Badge for Print */}
+                              {cell.isHoliday && (
+                                <span className="text-sm bg-red-100 text-red-600 px-2 py-0.5 rounded border border-red-200 font-bold">假</span>
+                              )}
                             </div>
-                          )}
 
-                          <div className="flex justify-center items-center h-full pb-8">
-                            {cell.isClosed ? (
-                              <div className="flex flex-col items-center">
-                                <span className="text-gray-300 font-bold text-2xl border-4 border-gray-200 rounded-xl px-4 py-1 -rotate-12 opacity-80">休診</span>
-                              </div>
-                            ) : (
-                              <div className={`w-[98%] py-1 rounded-lg text-center font-extrabold text-3xl shadow-none ${cell.cellStyle} flex items-center justify-center leading-none h-16`}>
-                                {cell.content}
+                            {/* Time Display */}
+                            {!cell.isClosed && (
+                              <div className={`text-sm text-center font-bold mb-1 tracking-tight ${cell.isSunday || cell.isHoliday ? 'text-red-600' : 'text-gray-500'}`}>
+                                {cell.timeString}
                               </div>
                             )}
-                          </div>
-                        </td>
-                      );
-                    })}
-                  </tr>
-                ))}
+
+                            <div className="flex justify-center items-center h-full pb-8">
+                              {cell.isClosed ? (
+                                <div className="flex flex-col items-center">
+                                  <span className="text-gray-300 font-bold text-2xl border-4 border-gray-200 rounded-xl px-4 py-1 -rotate-12 opacity-80">休診</span>
+                                </div>
+                              ) : (
+                                <div className={`w-[98%] py-1 rounded-lg text-center font-extrabold shadow-none ${cell.cellStyle} flex items-center justify-center leading-none ${heightClass}`}>
+                                  {cell.content}
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
 
