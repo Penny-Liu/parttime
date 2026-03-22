@@ -1,49 +1,20 @@
-# Radioshift
+<div align="center">
+<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+</div>
 
-A React application built for radioshifts planning.
+# Run and deploy your AI Studio app
 
-## Project Setup
+This contains everything you need to run your app locally.
 
-### Prerequisites
-- Node.js (v18 or higher recommended)
-- npm
+View your app in AI Studio: https://ai.studio/apps/2323776b-e80f-4ef6-8259-2964b770ab6c
 
-### Installation
-```bash
-npm install
-```
+## Run Locally
 
-### Development
-Start the development server:
-```bash
-npm run dev
-```
+**Prerequisites:**  Node.js
 
-### Build
-Build for production:
-```bash
-npm run build
-```
 
-## Deployment
-
-This project is configured to deploy automatically to **GitHub Pages** using GitHub Actions.
-
-### Setup GitHub Pages
-1. Go to your repository **Settings**.
-2. Navigate to **Pages** in the sidebar.
-3. Under **Build and deployment**, select **GitHub Actions** as the source.
-
-Once configured, any push to the `main` branch will trigger the deployment workflow.
-
-## Project Structure
-- `src/`: Source code
-  - `components/`: React components
-  - `services/`: API services
-- `.github/workflows/`: GitHub Actions workflows
-- `dist/`: Production build output (gitignored)
-
-## Operational Logs
-- **Init**: Project setup with `npm install`
-- **Config**: Updated `.gitignore` to exclude sensitive files (`.env`, etc.)
-- **CI/CD**: Added GitHub Actions workflow `deploy.yml` for automated deployment
+1. Install dependencies:
+   `npm install`
+2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
+3. Run the app:
+   `npm run dev`

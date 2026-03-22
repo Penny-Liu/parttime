@@ -12,15 +12,15 @@ interface CalendarProps {
   pendingDates?: Set<string>; // New prop to track unsaved dates
 }
 
-const Calendar: React.FC<CalendarProps> = ({
-  currentDate,
-  data,
-  currentUser,
-  onMonthChange,
+const Calendar: React.FC<CalendarProps> = ({ 
+  currentDate, 
+  data, 
+  currentUser, 
+  onMonthChange, 
   onDateClick,
   pendingDates = new Set()
 }) => {
-
+  
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -34,18 +34,12 @@ const Calendar: React.FC<CalendarProps> = ({
     const dateStr = formatDate(year, month, day);
     const dateObj = new Date(year, month, day);
     const dayOfWeek = dateObj.getDay();
-
+    
     const isHoliday = data.settings.holidays.includes(dateStr);
     const isSunday = dayOfWeek === 0;
     const isSaturday = dayOfWeek === 6;
 
-    // Check if isToday
-    const today = new Date();
-    const isToday = dateObj.getDate() === today.getDate() &&
-      dateObj.getMonth() === today.getMonth() &&
-      dateObj.getFullYear() === today.getFullYear();
-
-    let dateStyle = 'text-gray-600 bg-white border-gray-100';
+    let dateStyle = 'text-gray-600 bg-white border-gray-100'; 
     let badge = null;
 
     if (isSunday || isHoliday) {
@@ -60,18 +54,26 @@ const Calendar: React.FC<CalendarProps> = ({
     const confirmedId = shift?.confirmedUserId;
     const isClosed = shift?.isClosed;
     const isPending = pendingDates.has(dateStr);
+    const note = shift?.note;
 
-    return { dateStr, day, dayOfWeek, isHoliday, isSunday, isSaturday, isToday, dateStyle, badge, signups, confirmedId, isClosed, isPending };
+    return { dateStr, day, dayOfWeek, isHoliday, isSunday, isSaturday, dateStyle, badge, signups, confirmedId, isClosed, isPending, note };
   };
 
   const renderCellContent = (details: ReturnType<typeof getDayDetails>) => {
-    const { signups, confirmedId, isClosed, isSunday, isHoliday, isSaturday } = details;
+    const { signups, confirmedId, isClosed, isSunday, isHoliday, isSaturday, note } = details;
+
+    const NoteDisplay = () => note ? (
+      <div className="text-[10px] text-gray-500 mt-1 truncate w-full text-center bg-gray-50 rounded px-1 border border-gray-100" title={note}>
+        {note}
+      </div>
+    ) : null;
 
     if (isClosed) {
       return (
         <div className="flex flex-col items-center justify-center flex-1 opacity-50">
           <Lock size={16} className="text-gray-400 mb-1" />
           <span className="text-gray-400 font-bold text-sm tracking-widest">休診</span>
+          <NoteDisplay />
         </div>
       );
     }
@@ -79,26 +81,37 @@ const Calendar: React.FC<CalendarProps> = ({
     // Time Display
     let timeText = '10:00-18:00';
     if (isSunday || isHoliday) timeText = '10:00-17:00';
-
-    // Responsive Font Size for Time
+    
     const TimeBadge = () => (
-      <div className={`hidden md:block text-[10px] mb-1 font-medium text-center ${isSunday || isHoliday ? 'text-red-500' : isSaturday ? 'text-green-600' : 'text-gray-400'}`}>
-        {timeText}
-      </div>
+       <div className={`text-[10px] mb-1 font-medium text-center ${isSunday||isHoliday ? 'text-red-500' : isSaturday ? 'text-green-600' : 'text-gray-400'}`}>
+         {timeText}
+       </div>
     );
 
     // Logic: Confirmed user OR Single Signup (Auto-confirmed visually)
     const activeUserId = confirmedId || (signups.length === 1 ? signups[0] : null);
 
     if (activeUserId) {
+      if (activeUserId === 'NO_STUDENT') {
+        return (
+          <div className="flex flex-col h-full justify-between pb-1">
+            <TimeBadge />
+            <div className="py-3 px-1 rounded-xl text-base font-bold w-full text-center shadow-sm border border-gray-200 bg-gray-100 text-gray-500 flex flex-col items-center justify-center">
+               <span className="truncate w-full leading-none">放射師</span>
+            </div>
+            <NoteDisplay />
+          </div>
+        );
+      }
       const user = data.users.find(u => u.id === activeUserId);
       if (user) {
         return (
           <div className="flex flex-col h-full justify-between pb-1">
             <TimeBadge />
-            <div className={`py-1 md:py-3 px-1 rounded-xl text-xs md:text-base font-bold w-full text-center shadow-sm border border-white/50 ${user.color} flex flex-col items-center justify-center`}>
-              <span className="truncate w-full leading-none scale-90 md:scale-100 origin-center">{user.name}</span>
+            <div className={`py-3 px-1 rounded-xl text-base font-bold w-full text-center shadow-sm border border-white/50 ${user.color} flex flex-col items-center justify-center`}>
+               <span className="truncate w-full leading-none">{user.name}</span>
             </div>
+            <NoteDisplay />
           </div>
         );
       }
@@ -106,9 +119,10 @@ const Calendar: React.FC<CalendarProps> = ({
       return (
         <div className="flex flex-col h-full justify-between pb-1">
           <TimeBadge />
-          <div className="py-2 px-1 rounded-xl text-xs md:text-sm font-medium w-full text-center bg-gray-100 text-gray-400 border border-gray-200 border-dashed">
+          <div className="py-2 px-1 rounded-xl text-sm font-medium w-full text-center bg-gray-100 text-gray-400 border border-gray-200 border-dashed">
             {DEFAULT_WORKER_NAME}
           </div>
+          <NoteDisplay />
         </div>
       );
     } else {
@@ -118,12 +132,13 @@ const Calendar: React.FC<CalendarProps> = ({
           <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-1 text-center">
             <div className="text-xs text-yellow-600 font-bold mb-1">{signups.length} 人報名</div>
             <div className="flex flex-wrap gap-1 justify-center h-5 overflow-hidden">
-              {signups.map(uid => {
-                const u = data.users.find(usr => usr.id === uid);
-                return u ? <div key={uid} className={`w-1.5 h-1.5 rounded-full ${u.color.split(' ')[0]}`} /> : null;
-              })}
+               {signups.map(uid => {
+                 const u = data.users.find(usr => usr.id === uid);
+                 return u ? <div key={uid} className={`w-1.5 h-1.5 rounded-full ${u.color.split(' ')[0]}`} /> : null;
+               })}
             </div>
           </div>
+          <NoteDisplay />
         </div>
       );
     }
@@ -131,7 +146,7 @@ const Calendar: React.FC<CalendarProps> = ({
   };
 
   const calendarCells = [];
-
+  
   for (let i = 0; i < firstDayOfMonth; i++) {
     calendarCells.push(<div key={`empty-${i}`} className="min-h-[140px]" />);
   }
@@ -143,10 +158,10 @@ const Calendar: React.FC<CalendarProps> = ({
     const isSignedUp = details.signups.includes(currentUser?.id || '');
 
     calendarCells.push(
-      <div
-        key={details.dateStr}
+      <div 
+        key={details.dateStr} 
         onClick={() => {
-          if (isAdmin || isInteractable) onDateClick(details.dateStr);
+           if (isAdmin || isInteractable) onDateClick(details.dateStr);
         }}
         className={`
           relative min-h-[140px] p-2 rounded-2xl border transition-all duration-300 group
@@ -161,15 +176,13 @@ const Calendar: React.FC<CalendarProps> = ({
       >
         {details.badge}
         {details.isPending && (
-          <div className="absolute -top-2 -left-2 bg-orange-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm z-10 flex items-center gap-1 animate-pulse">
-            <CloudOff size={10} /> 未儲存
-          </div>
+            <div className="absolute -top-2 -left-2 bg-orange-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm z-10 flex items-center gap-1 animate-pulse">
+                <CloudOff size={10} /> 未儲存
+            </div>
         )}
-
+        
         <div className="flex justify-between items-center mb-1">
-          <span className={`text-lg md:text-xl font-bold font-quicksand ${details.isToday ? 'bg-blue-600 text-white w-7 h-7 flex items-center justify-center rounded-full shadow-md' : ''}`}>
-            {d}
-          </span>
+          <span className="text-xl font-bold font-quicksand">{d}</span>
           {isSignedUp && !isAdmin && <Check size={16} className="text-blue-500" strokeWidth={3} />}
           {isAdmin && details.signups.length > 0 && !details.confirmedId && (
             <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
@@ -181,9 +194,9 @@ const Calendar: React.FC<CalendarProps> = ({
         {/* Hover Action hint for Student */}
         {isInteractable && (
           <div className="absolute inset-0 bg-blue-500/5 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-            <span className="text-blue-600 font-bold text-xs bg-white/80 px-2 py-1 rounded-full shadow-sm">
-              {isSignedUp ? '取消報名' : '點擊報名'}
-            </span>
+             <span className="text-blue-600 font-bold text-xs bg-white/80 px-2 py-1 rounded-full shadow-sm">
+               {isSignedUp ? '取消報名' : '點擊報名'}
+             </span>
           </div>
         )}
       </div>
@@ -194,35 +207,36 @@ const Calendar: React.FC<CalendarProps> = ({
     <div className="space-y-6">
       {/* Header Card */}
       <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 flex flex-col md:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div className="p-3 bg-blue-100 text-blue-600 rounded-2xl">
-            <CalendarIcon size={24} />
-          </div>
-          <div>
-            <h2 className="text-3xl font-bold text-gray-800 tracking-tight font-quicksand">
-              {year} <span className="text-gray-300">/</span> {String(month + 1).padStart(2, '0')}
-            </h2>
-            <p className="text-gray-400 text-sm font-medium">Monthly Schedule</p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2 bg-gray-50 p-1.5 rounded-2xl">
-          <button onClick={() => onMonthChange(-1)} className="p-3 hover:bg-white hover:shadow-md rounded-xl transition-all text-gray-600">
-            <ChevronLeft size={20} />
-          </button>
-          <div className="h-6 w-px bg-gray-200 mx-2"></div>
-          <button onClick={() => onMonthChange(1)} className="p-3 hover:bg-white hover:shadow-md rounded-xl transition-all text-gray-600">
-            <ChevronRight size={20} />
-          </button>
-        </div>
+         <div className="flex items-center gap-4">
+           <div className="p-3 bg-blue-100 text-blue-600 rounded-2xl">
+             <CalendarIcon size={24} />
+           </div>
+           <div>
+             <h2 className="text-3xl font-bold text-gray-800 tracking-tight font-quicksand">
+               {year} <span className="text-gray-300">/</span> {String(month + 1).padStart(2, '0')}
+             </h2>
+             <p className="text-gray-400 text-sm font-medium">Monthly Schedule</p>
+           </div>
+         </div>
+         
+         <div className="flex items-center gap-2 bg-gray-50 p-1.5 rounded-2xl">
+           <button onClick={() => onMonthChange(-1)} className="p-3 hover:bg-white hover:shadow-md rounded-xl transition-all text-gray-600">
+             <ChevronLeft size={20} />
+           </button>
+           <div className="h-6 w-px bg-gray-200 mx-2"></div>
+           <button onClick={() => onMonthChange(1)} className="p-3 hover:bg-white hover:shadow-md rounded-xl transition-all text-gray-600">
+             <ChevronRight size={20} />
+           </button>
+         </div>
       </div>
 
       {/* Grid */}
       <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-4 md:p-6">
         <div className="grid grid-cols-7 mb-4">
           {WEEKDAYS.map((day, idx) => (
-            <div key={day} className={`text-center font-bold text-sm pb-2 border-b-2 border-transparent ${idx === 0 ? 'text-red-400' : idx === 6 ? 'text-green-500' : 'text-gray-400'
-              }`}>
+            <div key={day} className={`text-center font-bold text-sm pb-2 border-b-2 border-transparent ${
+              idx === 0 ? 'text-red-400' : idx === 6 ? 'text-green-500' : 'text-gray-400'
+            }`}>
               {day}
             </div>
           ))}

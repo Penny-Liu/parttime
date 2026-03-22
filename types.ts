@@ -16,6 +16,7 @@ export interface ShiftDay {
   signups: string[]; // User IDs of students who signed up
   confirmedUserId?: string; // ID of the student actually assigned
   isClosed?: boolean; // Is clinic closed manually
+  note?: string; // Optional note for the day
 }
 
 export interface ShiftMap {
