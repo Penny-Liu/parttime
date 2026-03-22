@@ -50,8 +50,8 @@ const PrintView: React.FC<PrintViewProps> = ({ currentDate, data, onClose }) => 
         
         if (activeUserId) {
             if (activeUserId === 'NO_STUDENT') {
-                content = "放射師";
-                cellStyle = "bg-gray-100 text-gray-500";
+                content = "不用工讀生";
+                cellStyle = "bg-gray-100 text-gray-400";
             } else {
                 const u = data.users.find(user => user.id === activeUserId);
                 if (u) {

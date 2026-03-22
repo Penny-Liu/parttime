@@ -17,6 +17,7 @@ export interface ShiftDay {
   confirmedUserId?: string; // ID of the student actually assigned
   isClosed?: boolean; // Is clinic closed manually
   note?: string; // Optional note for the day
+  memos?: Record<string, string>; // User ID -> memo text
 }
 
 export interface ShiftMap {
@@ -36,6 +37,6 @@ export interface AppData {
 }
 
 export interface ApiPayload {
-  action: 'getData' | 'login' | 'toggleSignup' | 'assignShift' | 'updateSettings' | 'manageUser' | 'setHoliday' | 'initialize';
+  action: 'getData' | 'login' | 'toggleSignup' | 'assignShift' | 'updateSettings' | 'manageUser' | 'setHoliday' | 'initialize' | 'updateMemo';
   payload?: any;
 }

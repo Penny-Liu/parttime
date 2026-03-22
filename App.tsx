@@ -24,6 +24,9 @@ const App: React.FC = () => {
   const [selectedAdminDate, setSelectedAdminDate] = useState<string | null>(null);
   const [adminNote, setAdminNote] = useState('');
 
+  const [selectedMemoDate, setSelectedMemoDate] = useState<string | null>(null);
+  const [studentMemo, setStudentMemo] = useState('');
+
   useEffect(() => {
     loadData();
   }, []);
@@ -165,6 +168,39 @@ const App: React.FC = () => {
       alert("備註已儲存");
     } catch (e: any) {
       alert("備註儲存失敗: " + e.message);
+      loadData();
+    }
+  };
+
+  const handleMemoClick = (dateStr: string) => {
+    if (!currentUser || !data) return;
+    const shift = data.shifts[dateStr];
+    setStudentMemo(shift?.memos?.[currentUser.id] || '');
+    setSelectedMemoDate(dateStr);
+  };
+
+  const handleSaveMemo = async () => {
+    if (!selectedMemoDate || !currentUser || !data) return;
+    
+    const shift = data.shifts[selectedMemoDate] || { date: selectedMemoDate, signups: [] };
+    const newMemos = { ...(shift.memos || {}), [currentUser.id]: studentMemo };
+    const newShift = { ...shift, memos: newMemos };
+    
+    const newData = { ...data, shifts: { ...data.shifts, [selectedMemoDate]: newShift } };
+    setData(newData);
+    setSelectedMemoDate(null);
+    
+    try {
+      await sendAction({
+        action: 'updateMemo',
+        payload: { 
+            date: selectedMemoDate, 
+            userId: currentUser.id,
+            memo: studentMemo
+        }
+      });
+    } catch (e: any) {
+      alert("備忘儲存失敗: " + e.message);
       loadData();
     }
   };
@@ -346,6 +382,7 @@ const App: React.FC = () => {
                 currentUser={currentUser}
                 onMonthChange={(inc) => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + inc, 1))}
                 onDateClick={handleDateClick}
+                onMemoClick={handleMemoClick}
                 pendingDates={new Set(unsavedActions.map(a => a.date))}
               />
             </section>
@@ -446,31 +483,38 @@ const App: React.FC = () => {
                       const isAutoConfirmed = !shift?.confirmedUserId && shift?.signups.length === 1 && !shift?.isClosed;
                       
                       return (
-                        <button
-                          key={uid}
-                          onClick={() => handleAdminShiftAction('confirm', uid)}
-                          className={`w-full flex items-center justify-between p-3 rounded-xl border-2 transition-all group ${
-                            isConfirmed 
-                              ? 'border-green-500 bg-green-50 shadow-sm' 
-                              : isAutoConfirmed
-                                ? 'border-blue-400 bg-blue-50 shadow-sm'
-                                : 'border-transparent bg-gray-50 hover:bg-blue-50 hover:border-blue-200'
-                          }`}
-                        >
-                          <div className="flex items-center gap-3">
-                            <span className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shadow-sm ${u.color}`}>
-                              {u.name[0]}
-                            </span>
-                            <span className="font-bold text-gray-700">{u.name}</span>
-                          </div>
-                          {isConfirmed ? (
-                             <span className="text-green-600 text-xs font-bold bg-green-100 px-2 py-1 rounded-full">Formal</span>
-                          ) : isAutoConfirmed ? (
-                             <span className="text-blue-600 text-xs font-bold bg-blue-100 px-2 py-1 rounded-full">Auto</span>
-                          ) : (
-                             <span className="text-gray-300 group-hover:text-blue-400 text-xs font-bold">Assign</span>
+                        <div key={uid} className="flex flex-col gap-1">
+                          <button
+                            onClick={() => handleAdminShiftAction('confirm', uid)}
+                            className={`w-full flex items-center justify-between p-3 rounded-xl border-2 transition-all group ${
+                              isConfirmed 
+                                ? 'border-green-500 bg-green-50 shadow-sm' 
+                                : isAutoConfirmed
+                                  ? 'border-blue-400 bg-blue-50 shadow-sm'
+                                  : 'border-transparent bg-gray-50 hover:bg-blue-50 hover:border-blue-200'
+                            }`}
+                          >
+                            <div className="flex items-center gap-3">
+                              <span className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shadow-sm ${u.color}`}>
+                                {u.name[0]}
+                              </span>
+                              <span className="font-bold text-gray-700">{u.name}</span>
+                            </div>
+                            {isConfirmed ? (
+                               <span className="text-green-600 text-xs font-bold bg-green-100 px-2 py-1 rounded-full">Formal</span>
+                            ) : isAutoConfirmed ? (
+                               <span className="text-blue-600 text-xs font-bold bg-blue-100 px-2 py-1 rounded-full">Auto</span>
+                            ) : (
+                               <span className="text-gray-300 group-hover:text-blue-400 text-xs font-bold">Assign</span>
+                            )}
+                          </button>
+                          {shift?.memos?.[uid] && (
+                            <div className="mx-2 px-3 py-1.5 bg-blue-50 text-blue-600 text-[10px] font-bold rounded-lg border border-blue-100 flex items-center gap-2">
+                               <div className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-pulse"></div>
+                               備忘: {shift.memos[uid]}
+                            </div>
                           )}
-                        </button>
+                        </div>
                       );
                     })}
                   </div>
@@ -495,7 +539,7 @@ const App: React.FC = () => {
                       : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                     }`}
                  >
-                   放射師
+                   不用工讀生
                  </button>
                  <button 
                     onClick={() => handleAdminShiftAction('clear')}
@@ -522,6 +566,46 @@ const App: React.FC = () => {
                     儲存備註
                   </button>
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {selectedMemoDate && currentUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden transform scale-100 transition-all">
+            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-6 text-white flex justify-between items-center">
+              <div>
+                 <h3 className="text-xl font-bold">個人備忘</h3>
+                 <p className="text-blue-100 text-sm opacity-80">{selectedMemoDate}</p>
+              </div>
+              <button onClick={() => setSelectedMemoDate(null)} className="text-white/60 hover:text-white bg-white/10 hover:bg-white/20 p-2 rounded-full transition-all">
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className="p-6 space-y-4">
+              <p className="text-sm text-gray-500 font-medium">您可以為當天報名留下備註 (例如：只能下午班、支援到15:00等)</p>
+              <textarea
+                value={studentMemo}
+                onChange={e => setStudentMemo(e.target.value)}
+                placeholder="在此輸入備忘內容..."
+                rows={3}
+                className="w-full p-3 border border-gray-200 rounded-xl text-sm outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100 transition-all resize-none"
+              />
+              <div className="flex gap-3">
+                 <button 
+                  onClick={() => setSelectedMemoDate(null)}
+                  className="flex-1 p-3 rounded-xl font-bold bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all"
+                 >
+                   取消
+                 </button>
+                 <button 
+                  onClick={handleSaveMemo}
+                  className="flex-1 p-3 rounded-xl font-bold bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all"
+                 >
+                   儲存備忘
+                 </button>
               </div>
             </div>
           </div>

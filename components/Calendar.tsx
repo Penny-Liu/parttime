@@ -1,7 +1,7 @@
 import React from 'react';
 import { AppData, User, ShiftDay, UserRole } from '../types';
 import { DEFAULT_WORKER_NAME, WEEKDAYS } from '../constants';
-import { Check, Lock, Calendar as CalendarIcon, ChevronLeft, ChevronRight, CloudOff } from 'lucide-react';
+import { Check, Lock, Calendar as CalendarIcon, ChevronLeft, ChevronRight, CloudOff, MessageSquare } from 'lucide-react';
 
 interface CalendarProps {
   currentDate: Date;
@@ -9,6 +9,7 @@ interface CalendarProps {
   currentUser: User | null;
   onMonthChange: (increment: number) => void;
   onDateClick: (dateStr: string) => void;
+  onMemoClick?: (dateStr: string) => void;
   pendingDates?: Set<string>; // New prop to track unsaved dates
 }
 
@@ -18,6 +19,7 @@ const Calendar: React.FC<CalendarProps> = ({
   currentUser, 
   onMonthChange, 
   onDateClick,
+  onMemoClick,
   pendingDates = new Set()
 }) => {
   
@@ -56,11 +58,11 @@ const Calendar: React.FC<CalendarProps> = ({
     const isPending = pendingDates.has(dateStr);
     const note = shift?.note;
 
-    return { dateStr, day, dayOfWeek, isHoliday, isSunday, isSaturday, dateStyle, badge, signups, confirmedId, isClosed, isPending, note };
+    return { dateStr, day, dayOfWeek, isHoliday, isSunday, isSaturday, dateStyle, badge, signups, confirmedId, isClosed, isPending, note, shift };
   };
 
   const renderCellContent = (details: ReturnType<typeof getDayDetails>) => {
-    const { signups, confirmedId, isClosed, isSunday, isHoliday, isSaturday, note } = details;
+    const { signups, confirmedId, isClosed, isSunday, isHoliday, isSaturday, note, shift } = details;
 
     const NoteDisplay = () => note ? (
       <div className="text-[10px] text-gray-500 mt-1 truncate w-full text-center bg-gray-50 rounded px-1 border border-gray-100" title={note}>
@@ -90,19 +92,26 @@ const Calendar: React.FC<CalendarProps> = ({
 
     // Logic: Confirmed user OR Single Signup (Auto-confirmed visually)
     const activeUserId = confirmedId || (signups.length === 1 ? signups[0] : null);
+    const isNoAssistant = activeUserId === 'NO_STUDENT';
+
+    // Get current student memo if any
+    const shiftMemos = shift?.memos || {};
+    const relevantMemos = Object.entries(shiftMemos).filter(([uid]) => signups.includes(uid));
+
+    if (isNoAssistant) {
+      return (
+        <div className="flex flex-col h-full justify-between pb-1">
+          <TimeBadge />
+          <div className="py-3 px-1 rounded-xl text-base font-bold w-full text-center shadow-sm border border-gray-200 bg-gray-100 text-gray-500 opacity-60 flex flex-col items-center justify-center">
+             <span className="truncate w-full leading-none">不用工讀生</span>
+             <span className="text-[10px] mt-1 opacity-70">(放射師)</span>
+          </div>
+          <NoteDisplay />
+        </div>
+      );
+    }
 
     if (activeUserId) {
-      if (activeUserId === 'NO_STUDENT') {
-        return (
-          <div className="flex flex-col h-full justify-between pb-1">
-            <TimeBadge />
-            <div className="py-3 px-1 rounded-xl text-base font-bold w-full text-center shadow-sm border border-gray-200 bg-gray-100 text-gray-500 flex flex-col items-center justify-center">
-               <span className="truncate w-full leading-none">放射師</span>
-            </div>
-            <NoteDisplay />
-          </div>
-        );
-      }
       const user = data.users.find(u => u.id === activeUserId);
       if (user) {
         return (
@@ -111,6 +120,11 @@ const Calendar: React.FC<CalendarProps> = ({
             <div className={`py-3 px-1 rounded-xl text-base font-bold w-full text-center shadow-sm border border-white/50 ${user.color} flex flex-col items-center justify-center`}>
                <span className="truncate w-full leading-none">{user.name}</span>
             </div>
+            {shiftMemos[activeUserId] && (
+               <div className="text-[9px] text-blue-600 bg-blue-50 border border-blue-100 rounded px-1 mt-1 font-medium truncate w-full" title={shiftMemos[activeUserId]}>
+                 備忘: {shiftMemos[activeUserId]}
+               </div>
+            )}
             <NoteDisplay />
           </div>
         );
@@ -134,10 +148,29 @@ const Calendar: React.FC<CalendarProps> = ({
             <div className="flex flex-wrap gap-1 justify-center h-5 overflow-hidden">
                {signups.map(uid => {
                  const u = data.users.find(usr => usr.id === uid);
-                 return u ? <div key={uid} className={`w-1.5 h-1.5 rounded-full ${u.color.split(' ')[0]}`} /> : null;
+                 return u ? (
+                    <div key={uid} className="group/dot relative">
+                       <div className={`w-1.5 h-1.5 rounded-full ${u.color.split(' ')[0]}`} />
+                       {shiftMemos[uid] && (
+                          <div className="absolute -top-1 -right-1 w-1 h-1 bg-red-400 rounded-full"></div>
+                       )}
+                    </div>
+                 ) : null;
                })}
             </div>
           </div>
+          {relevantMemos.length > 0 && (
+            <div className="mt-1 space-y-0.5">
+               {relevantMemos.slice(0, 2).map(([uid, text]) => {
+                  const u = data.users.find(usr => usr.id === uid);
+                  return (
+                    <div key={uid} className="text-[8px] text-gray-400 truncate text-left px-0.5 leading-tight" title={`${u?.name}: ${text}`}>
+                      {u?.name}: {text}
+                    </div>
+                  );
+               })}
+            </div>
+          )}
           <NoteDisplay />
         </div>
       );
@@ -161,16 +194,16 @@ const Calendar: React.FC<CalendarProps> = ({
       <div 
         key={details.dateStr} 
         onClick={() => {
-           if (isAdmin || isInteractable) onDateClick(details.dateStr);
+           if (isAdmin || (isInteractable && details.confirmedId !== 'NO_STUDENT')) onDateClick(details.dateStr);
         }}
         className={`
           relative min-h-[140px] p-2 rounded-2xl border transition-all duration-300 group
           flex flex-col
-          ${details.dateStyle}
-          ${isInteractable ? 'cursor-pointer hover:-translate-y-1 hover:shadow-lg' : ''}
+          ${details.confirmedId === 'NO_STUDENT' ? 'text-gray-400 bg-gray-50/50 border-gray-100' : details.dateStyle}
+          ${isInteractable && details.confirmedId !== 'NO_STUDENT' ? 'cursor-pointer hover:-translate-y-1 hover:shadow-lg' : ''}
           ${isAdmin ? 'cursor-pointer hover:border-blue-300 hover:shadow-md' : ''}
           ${isSignedUp && !isAdmin ? 'ring-2 ring-blue-300 bg-blue-50/80' : ''}
-          ${!isInteractable && !isAdmin ? 'opacity-90' : ''}
+          ${(!isInteractable && !isAdmin) || details.confirmedId === 'NO_STUDENT' ? 'opacity-90' : ''}
           ${details.isPending ? 'ring-2 ring-orange-400 border-orange-300 bg-orange-50' : ''} 
         `}
       >
@@ -182,7 +215,21 @@ const Calendar: React.FC<CalendarProps> = ({
         )}
         
         <div className="flex justify-between items-center mb-1">
-          <span className="text-xl font-bold font-quicksand">{d}</span>
+          <div className="flex items-center gap-2">
+            <span className="text-xl font-bold font-quicksand">{d}</span>
+            {isSignedUp && !isAdmin && (
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onMemoClick?.(details.dateStr);
+                }}
+                className="p-1 hover:bg-white rounded-lg text-blue-400 hover:text-blue-600 transition-all border border-transparent hover:border-blue-100 shadow-sm"
+                title="編輯備忘"
+              >
+                <MessageSquare size={14} />
+              </button>
+            )}
+          </div>
           {isSignedUp && !isAdmin && <Check size={16} className="text-blue-500" strokeWidth={3} />}
           {isAdmin && details.signups.length > 0 && !details.confirmedId && (
             <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
