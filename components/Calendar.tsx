@@ -103,7 +103,7 @@ const Calendar: React.FC<CalendarProps> = ({
         <div className="flex flex-col h-full justify-between pb-1">
           <TimeBadge />
           <div className="py-3 px-1 rounded-xl text-base font-bold w-full text-center shadow-sm border border-gray-200 bg-gray-100 text-gray-500 opacity-60 flex flex-col items-center justify-center">
-             <span className="truncate w-full leading-none">不用工讀生</span>
+             <span className="truncate w-full leading-none">放射師</span>
              <span className="text-[10px] mt-1 opacity-70">(放射師)</span>
           </div>
           <NoteDisplay />

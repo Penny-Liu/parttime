@@ -539,7 +539,7 @@ const App: React.FC = () => {
                       : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                     }`}
                  >
-                   不用工讀生
+                   放射師
                  </button>
                  <button 
                     onClick={() => handleAdminShiftAction('clear')}
