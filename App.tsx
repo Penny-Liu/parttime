@@ -26,6 +26,7 @@ const App: React.FC = () => {
 
   const [selectedMemoDate, setSelectedMemoDate] = useState<string | null>(null);
   const [studentMemo, setStudentMemo] = useState('');
+  const [isSavingMemo, setIsSavingMemo] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -155,6 +156,7 @@ const App: React.FC = () => {
     const newData = { ...data, shifts: { ...data.shifts, [selectedAdminDate]: newShift } };
     setData(newData);
     
+    setIsSavingMemo(true);
     try {
       await sendAction({
         action: 'assignShift',
@@ -165,10 +167,12 @@ const App: React.FC = () => {
             note: adminNote
         }
       });
-      alert("備註已儲存");
+      alert("✅ 備註已儲存成功！");
     } catch (e: any) {
-      alert("備註儲存失敗: " + e.message);
+      alert("❌ 備註儲存失敗: " + e.message);
       loadData();
+    } finally {
+      setIsSavingMemo(false);
     }
   };
 
@@ -188,8 +192,7 @@ const App: React.FC = () => {
     
     const newData = { ...data, shifts: { ...data.shifts, [selectedMemoDate]: newShift } };
     setData(newData);
-    setSelectedMemoDate(null);
-    
+    setIsSavingMemo(true);
     try {
       await sendAction({
         action: 'updateMemo',
@@ -199,9 +202,13 @@ const App: React.FC = () => {
             memo: studentMemo
         }
       });
+      alert("✅ 個人備忘已儲存成功！");
+      setSelectedMemoDate(null);
     } catch (e: any) {
-      alert("備忘儲存失敗: " + e.message);
+      alert("❌ 備忘儲存失敗: " + e.message);
       loadData();
+    } finally {
+      setIsSavingMemo(false);
     }
   };
 
@@ -561,9 +568,10 @@ const App: React.FC = () => {
                   />
                   <button
                     onClick={handleSaveNote}
-                    className="bg-blue-50 text-blue-600 px-4 py-2 rounded-xl text-sm font-bold hover:bg-blue-100 transition-all whitespace-nowrap"
+                    disabled={isSavingMemo}
+                    className="bg-blue-50 text-blue-600 px-4 py-2 rounded-xl text-sm font-bold hover:bg-blue-100 transition-all whitespace-nowrap disabled:opacity-50"
                   >
-                    儲存備註
+                    {isSavingMemo ? '儲存中...' : '儲存備註'}
                   </button>
                 </div>
               </div>
@@ -600,12 +608,17 @@ const App: React.FC = () => {
                  >
                    取消
                  </button>
-                 <button 
-                  onClick={handleSaveMemo}
-                  className="flex-1 p-3 rounded-xl font-bold bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all"
-                 >
-                   儲存備忘
-                 </button>
+                  <button 
+                   onClick={handleSaveMemo}
+                   disabled={isSavingMemo}
+                   className="flex-1 p-3 rounded-xl font-bold bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                  >
+                    {isSavingMemo ? (
+                      <>
+                        <Loader2 size={18} className="animate-spin" /> 儲存中...
+                      </>
+                    ) : '儲存備忘'}
+                  </button>
               </div>
             </div>
           </div>
