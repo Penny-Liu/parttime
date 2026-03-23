@@ -140,9 +140,15 @@ function saveAllData(ss, data) {
      Object.values(data.shifts).forEach(s => {
        shiftRows.push(["'" + s.date, JSON.stringify(s.signups), s.confirmedUserId || '', s.isClosed || false, s.note || '', JSON.stringify(s.memos || {})]);
      });
-     if (shiftRows.length > 0) {
-       shiftsSheet.getRange(2, 1, shiftRows.length, 6).setValues(shiftRows);
-     }
+      if (shiftRows.length > 0) {
+        const usersMapping = getUsersMapping(ss);
+        const shiftRowsWithReadable = shiftRows.map((row, idx) => {
+          const memos = JSON.parse(row[5]);
+          const readableMemos = formatMemos(memos, usersMapping);
+          return [...row, readableMemos];
+        });
+        shiftsSheet.getRange(2, 1, shiftRowsWithReadable.length, 7).setValues(shiftRowsWithReadable);
+      }
   }
 }
 
@@ -188,12 +194,19 @@ function updateMemo(ss, dateStr, userId, memoText) {
   if (rowIndex === -1) {
     const memos = {};
     memos[userId] = memoText;
-    sheet.appendRow(["'" + dateStr, '[]', '', false, '', JSON.stringify(memos)]);
+    const usersMapping = getUsersMapping(ss);
+    const readableMemos = formatMemos(memos, usersMapping);
+    sheet.appendRow(["'" + dateStr, '[]', '', false, '', JSON.stringify(memos), readableMemos]);
   } else {
     const currentMemosJSON = data[rowIndex - 1][5]; // Memos_JSON is 6th column
     let memos = currentMemosJSON ? JSON.parse(currentMemosJSON) : {};
     memos[userId] = memoText;
+    
+    const usersMapping = getUsersMapping(ss);
+    const readableMemos = formatMemos(memos, usersMapping);
+    
     sheet.getRange(rowIndex, 6).setValue(JSON.stringify(memos));
+    sheet.getRange(rowIndex, 7).setValue(readableMemos);
   }
 }
 
@@ -261,14 +274,37 @@ function setupSheets(ss) {
     } else {
       // 確保欄位標題是最新的 (針對 Shifts)
       if (name === 'Shifts') {
-        const header = s.getRange(1, 1, 1, 6).getValues()[0];
+        const header = s.getRange(1, 1, 1, 7).getValues()[0];
         if (header.length < 5 || header[4] !== 'Note') {
            s.getRange(1, 5).setValue('Note');
         }
         if (header.length < 6 || header[5] !== 'Memos_JSON') {
            s.getRange(1, 6).setValue('Memos_JSON');
         }
+        if (header.length < 7 || header[6] !== '工讀生備忘') {
+           s.getRange(1, 7).setValue('工讀生備忘');
+        }
       }
     }
   });
+}
+
+function getUsersMapping(ss) {
+  const usersSheet = ss.getSheetByName('Users');
+  const data = usersSheet.getDataRange().getValues();
+  const mapping = {};
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][0]) {
+      mapping[String(data[i][0])] = data[i][1];
+    }
+  }
+  return mapping;
+}
+
+function formatMemos(memos, mapping) {
+  if (!memos || Object.keys(memos).length === 0) return '';
+  return Object.keys(memos).map(uid => {
+    const name = mapping[uid] || uid;
+    return name + ': ' + memos[uid];
+  }).join('\n');
 }
